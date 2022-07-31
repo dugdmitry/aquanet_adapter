@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>aquanet_adapter</name>
+  <version>0.0.1</version>
+  <description>
+    AquaNet ROS Adapter.
+  </description>
+  <maintainer email="ddugaev@gradcenter.cuny.edu">Dmitrii Dugaev</maintainer>
+  <license>BSD</license>
+
+  <url type="website">http://www.ros.org/wiki/turtlesim</url>
+  <url type="bugtracker">https://github.com/ros/ros_tutorials/issues</url>
+  <url type="repository">https://github.com/ros/ros_tutorials</url>
+  <author>Dmitrii Dugaev</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+</package>
