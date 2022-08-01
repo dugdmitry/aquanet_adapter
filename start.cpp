@@ -428,7 +428,8 @@ int main(int argc, char **argv)
     }
 
     // Start aquanet stack
-    system("cd /home/ubuntu/ros_catkin_ws/src/aquanet_adapter/aquanet_scripts && ./run_aquanet.sh");
+    // system("cd /home/ubuntu/ros_catkin_ws/src/aquanet_adapter/aquanet_scripts && ./run_aquanet.sh");
+    system("./run_aquanet.sh");
 
     // Initialize the ROS system and become a node.
     ros::init(argc, argv, "aquanet_node");
