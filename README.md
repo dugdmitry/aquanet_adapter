@@ -53,6 +53,27 @@ Create a symlink for the compiled aquanet-protobuf messages:
 
     sudo ln -s ~/$ROS_FOLDER/devel_isolated/aquanet_adapter/lib/libaquanet.message.pb.so /usr/lib/libaquanet.message.pb.so
 
+## Experimental: uuv_simulator with plume tracing tests
+
+This section descirbes how to run `ros-aquanet-adapter` in the `local mode` for uuv_plume_simulator tests.
+
+Run `roscore`, if not initialized already:
+
+    roscore
+
+Start `aquanet-adapter` by executing the following:
+
+    cd $ROS_FOLDER/src/aquanet_adapter/aquanet_scripts/
+    rosrun aquanet_adapter start local
+
+Replace a topic name the ROVs are using to receive `Waypoint` messages:
+
+Original topic name: `rov1/go_to`
+
+New topic name: `aquanet_outbound_waypoint`
+
+Execute the plume tracing script (i.e. `leader1.py`). Observe that the messages are recieved by ROVs over the aquanet-adapter.
+
 ## Running aquanet-adapter
 
 Run `roscore`, if not initialized already:
