@@ -509,6 +509,8 @@ int main(int argc, char **argv)
 
         // Start the receive thread
         std::thread t1(receiveAquaDccl, m_socket);
+        // Let ROS take over.
+        ros::spin();
     }
     else if (localMode)
     {
@@ -517,11 +519,13 @@ int main(int argc, char **argv)
         // waypoint
         ros::Subscriber sub_waypoint = nh.subscribe("aquanet_outbound_waypoint/", 1, waypointMessageReceived);
         // TODO: change the topic name
-        // aquanet_inbound_publisher_waypoint = nh.advertise<uuv_control_msgs::Waypoint>("aquanet_inbound_waypoint", 1);
-        aquanet_inbound_publisher_waypoint = nh.advertise<uuv_control_msgs::Waypoint>("rov1/go_to", 1);
+        aquanet_inbound_publisher_waypoint = nh.advertise<uuv_control_msgs::Waypoint>("aquanet_inbound_waypoint", 1);
 
         // // Start the receive thread
-        // std::thread t1(receiveAqua, m_socket);
+        // std::thread t1(receiveAqua2);
+
+        // Let ROS take over.
+        ros::spin();
     }
     else
     {
@@ -534,7 +538,7 @@ int main(int argc, char **argv)
 
         // Start the receive thread
         std::thread t1(receiveAqua, m_socket);
+        // Let ROS take over.
+        ros::spin();
     }
-    // Let ROS take over.
-    ros::spin();
 }

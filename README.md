@@ -57,22 +57,37 @@ Create a symlink for the compiled aquanet-protobuf messages:
 
 This section descirbes how to run `ros-aquanet-adapter` in the `local mode` for uuv_plume_simulator tests.
 
-Run `roscore`, if not initialized already:
+Start `multi_rov_test.launch` file:
 
-    roscore
+    roslaunch multi_auv_sim multi_rov_test.launch
 
 Start `aquanet-adapter` by executing the following:
 
     cd $ROS_FOLDER/src/aquanet_adapter/aquanet_scripts/
     rosrun aquanet_adapter start local
 
-Replace a topic name the ROVs are using to receive `Waypoint` messages:
+Replace original topic name in `leader.py` to `aquanet_outbound_waypoint` name, indicating an entry point to the aquanet-adapter stack:
 
-Original topic name: `rov1/go_to`
+Original topic name: `Waypoint_pub`
 
 New topic name: `aquanet_outbound_waypoint`
 
-Execute the plume tracing script (i.e. `leader1.py`). Observe that the messages are recieved by ROVs over the aquanet-adapter.
+Replace original topic name in `node2.py`, `node3.py` and `node4.py` files to `aquanet_inbound_waypoint` name, indicating an exit point from the aquanet-adapter stack at the receiver side:
+
+Original topic name: `Waypoint_pub`
+
+New topic name: `aquanet_inbound_waypoint`
+
+Execute the plume tracing script:
+
+    roslaunch multi_auv_sim start_mbplume.launch
+
+Observe the output from the ros-aquanet-adapter console and make sure that the messages are successfully intercepted and forwarded. The following output should be observed:
+
+    [ INFO] [1662861151.355090286, 2925.418000000]: Forwarding message:
+    [ INFO] [1662861151.355172801, 2925.418000000]: position=(20.00,25.00) angle=-0.70
+
+
 
 ## Running aquanet-adapter
 
