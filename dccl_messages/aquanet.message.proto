@@ -13,4 +13,5 @@ message AquanetMessage {
   enum VehicleClass { AUV = 1; USV = 2; SHIP = 3; }
   optional VehicleClass veh_class = 6;
   optional bool battery_ok = 7;
+  optional uint32 stream_id = 8 [(dccl.field) = { min: 0 max: 10 precision: 1 }];
 }

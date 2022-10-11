@@ -9,10 +9,12 @@ sleep 2
 # start the VMDM
 #/home/ubuntu/aquanet/trunk/bin/aquanet-vmdc 10.13.13.101 2021 1 10 10 10 &
 #../aquanet_bin/aquanet-vmdc 130.160.143.6 2102 1 10 10 10 &
-../aquanet_bin/aquanet-vmdc 10.13.13.102 2021 1 10 10 10 &
+#../aquanet_bin/aquanet-vmdc 100.119.195.86 2021 1 10 10 10 &
+../aquanet_bin/aquanet-gatech &
 sleep 4
 # start the MAC
-../aquanet_bin/aquanet-uwaloha &
+# ../aquanet_bin/aquanet-bcmac &
+../aquanet_bin/aquanet-trumac &
 sleep 2
 # start the routing protocol
 ../aquanet_bin/aquanet-sroute &
