@@ -3,7 +3,6 @@
 #include <ros/ros.h>
 #include <geometry_msgs/Twist.h>
 #include <std_msgs/String.h>
-#include <uuv_control_msgs/Waypoint.h>
 #include <iomanip> // for std::setprecision and std::fixed
 
 // dccl
@@ -38,9 +37,10 @@ std::string inbound_topic = "aquanet_inbound";
 std::string outbound_topic = "aquanet_outbound";
 
 // Initialize publishers
-ros::Publisher aquanet_inbound_publisher_twist;
+ros::Publisher aquanet_inbound_publisher_twist_1;
+ros::Publisher aquanet_inbound_publisher_twist_2;
+ros::Publisher aquanet_inbound_publisher_twist_3;
 ros::Publisher aquanet_inbound_publisher_string;
-ros::Publisher aquanet_inbound_publisher_waypoint;
 
 // Aquanet socket
 int m_socket = -1;
@@ -112,6 +112,7 @@ void twistMessageReceived(const geometry_msgs::Twist::ConstPtr& vel)
         r_out.set_z(0);
         r_out.set_veh_class(AquanetMessage::AUV);
         r_out.set_battery_ok(true);
+        r_out.set_stream_id(1);
         
         m_codec.encode(&sent_msg, r_out);
     }
@@ -132,15 +133,60 @@ void twistMessageReceived(const geometry_msgs::Twist::ConstPtr& vel)
 
 }
 
-// waypoint message from uuv_control_msgs
-void waypointMessageReceived(const uuv_control_msgs::Waypoint::ConstPtr& msg)
+void twistMessageReceived2(const geometry_msgs::Twist::ConstPtr& vel)
 {
-    ROS_INFO_STREAM("Forwarding message:");
-    ROS_INFO_STREAM(std::setprecision(2) << std::fixed << "position=(" << msg->point.x << "," << msg->point.y << ")" << " angle=" << msg->point.z);
+    ROS_INFO_STREAM(std::setprecision(2) << std::fixed << "position=(" << vel->linear.x << "," << vel->linear.y << ")" << " angle=" << vel->angular.z);
 
-    // TODO: include the aquanet stack and forward the message over it locally
-    // Forward message to the receiving topic, bypassing the aquanet stack so far
-    aquanet_inbound_publisher_waypoint.publish(msg);
+    // Construct aqua-message with twist-message inside
+    std::string sent_msg;
+    m_codec.load<AquanetMessage>();
+    {
+        AquanetMessage r_out;
+        r_out.set_ros_msg_id(1);                // 1 - ros twist-message;
+        r_out.set_x(vel->angular.z);            // set angular velocity to x
+        r_out.set_y(vel->linear.x);            // set linear velocity to y
+        r_out.set_z(0);
+        r_out.set_veh_class(AquanetMessage::AUV);
+        r_out.set_battery_ok(true);
+        r_out.set_stream_id(2);
+        
+        m_codec.encode(&sent_msg, r_out);
+    }
+
+    // Send aqua-message over aqua-socket
+    if (aqua_sendto(m_socket, sent_msg.data(), sent_msg.size(), 0, (struct sockaddr *) & m_to_addr, sizeof (m_to_addr)) < 0) {
+        printf("failed to send to the socket");
+        perror("m_socket closed");
+        exit(1);
+    }
+}
+
+void twistMessageReceived3(const geometry_msgs::Twist::ConstPtr& vel)
+{
+    ROS_INFO_STREAM(std::setprecision(2) << std::fixed << "position=(" << vel->linear.x << "," << vel->linear.y << ")" << " angle=" << vel->angular.z);
+
+    // Construct aqua-message with twist-message inside
+    std::string sent_msg;
+    m_codec.load<AquanetMessage>();
+    {
+        AquanetMessage r_out;
+        r_out.set_ros_msg_id(1);                // 1 - ros twist-message;
+        r_out.set_x(vel->angular.z);            // set angular velocity to x
+        r_out.set_y(vel->linear.x);            // set linear velocity to y
+        r_out.set_z(0);
+        r_out.set_veh_class(AquanetMessage::AUV);
+        r_out.set_battery_ok(true);
+        r_out.set_stream_id(3);
+        
+        m_codec.encode(&sent_msg, r_out);
+    }
+
+    // Send aqua-message over aqua-socket
+    if (aqua_sendto(m_socket, sent_msg.data(), sent_msg.size(), 0, (struct sockaddr *) & m_to_addr, sizeof (m_to_addr)) < 0) {
+        printf("failed to send to the socket");
+        perror("m_socket closed");
+        exit(1);
+    }
 }
 
 // string message
@@ -399,7 +445,22 @@ void receiveAquaDccl(int recv_socket)
                 geometry_msgs::Twist twist;
                 twist.angular.z = 1.0*r_in.x();
                 twist.linear.x = 1.0*r_in.y();
-                aquanet_inbound_publisher_twist.publish(twist);
+                if (r_in.stream_id() == 1)
+                {
+                    aquanet_inbound_publisher_twist_1.publish(twist);
+                }
+                else if (r_in.stream_id() == 2)
+                {
+                    aquanet_inbound_publisher_twist_2.publish(twist);
+                }
+                else if (r_in.stream_id() == 3)
+                {
+                    aquanet_inbound_publisher_twist_3.publish(twist);
+                }
+                else
+                {
+                    ROS_INFO("Error! Stream ID!: [%s]", r_in.stream_id());
+                }
             }
             else if (r_in.ros_msg_id() == 2)        // handle string message
             {
@@ -415,19 +476,10 @@ void receiveAquaDccl(int recv_socket)
     }
 }
 
+
 int main(int argc, char **argv)
 {
-    // turn the local_mode on for gazebo integration tests
-    bool localMode = false;
-    if (argc == 2)
-    {
-        if (strcmp(argv[1], "local") == 0)
-        {
-            localMode = true;
-        }
-    }
-
-    if ((argc < 3) && !localMode)
+    if (argc < 3)
     {
         std::cout << "Error! No local and/or destination addresses specified!\n";
         return -1;
@@ -435,7 +487,7 @@ int main(int argc, char **argv)
 
     // check the additional dccl flag
     bool dccl_enabled = false;
-    if ((argc == 4) && !localMode)
+    if (argc == 4)
     {
         if (strcmp(argv[3], "dccl") == 0)
         {
@@ -451,79 +503,65 @@ int main(int argc, char **argv)
     }
 
     // Start aquanet stack
-    if (!localMode)
-    {
-        // system("cd /home/ubuntu/ros_catkin_ws/src/aquanet_adapter/aquanet_scripts && ./run_aquanet.sh");
-        system("./run_aquanet.sh");
-    }
+    system("cd /home/pi/ros_catkin_ws/src/aquanet_adapter/aquanet_scripts && ./run_aquanet.sh");
 
     // Initialize the ROS system and become a node.
     ros::init(argc, argv, "aquanet_node");
     ros::NodeHandle nh;
 
-    if (!localMode)
-    {
-        // // Creating socket file descriptor
-        // if ( (send_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
-        //     perror("socket creation failed");
-        //     exit(EXIT_FAILURE);
-        // }
-    
-        // // struct sockaddr_in servaddr;  
-        // // clear servaddr
-        // bzero(&servaddr, sizeof(servaddr));
+    // // Creating socket file descriptor
+    // if ( (send_sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0 ) {
+    //     perror("socket creation failed");
+    //     exit(EXIT_FAILURE);
+    // }
+  
+    // // struct sockaddr_in servaddr;  
+    // // clear servaddr
+    // bzero(&servaddr, sizeof(servaddr));
 
-        // if (std::stoi(argv[1]) == 1)
-        // {
-        //     servaddr.sin_addr.s_addr = inet_addr("10.13.13.101");
-        // }
-        // else
-        // {
-        //     servaddr.sin_addr.s_addr = inet_addr("10.13.13.102");
-        // }
-        // servaddr.sin_port = htons(57777);
-        // servaddr.sin_family = AF_INET;
+    // if (std::stoi(argv[1]) == 1)
+    // {
+    //     servaddr.sin_addr.s_addr = inet_addr("10.13.13.101");
+    // }
+    // else
+    // {
+    //     servaddr.sin_addr.s_addr = inet_addr("10.13.13.102");
+    // }
+    // servaddr.sin_port = htons(57777);
+    // servaddr.sin_family = AF_INET;
 
-        // Create socket
-        if ((m_socket = aqua_socket(AF_AQUANET, SOCK_AQUANET, 0)) < 0) {
-            printf("socket creation failed\n");
-            perror("m_socket closed");
-            exit(1);
-        }
-
-        m_to_addr.sin_family = AF_AQUANET;
-        // Set local and dest aquanet addresses from CLI
-        m_to_addr.sin_addr.s_addr = std::stoi(argv[1]);
-        m_to_addr.sin_addr.d_addr = std::stoi(argv[2]);
+    // Create socket
+    if ((m_socket = aqua_socket(AF_AQUANET, SOCK_AQUANET, 0)) < 0) {
+        printf("socket creation failed\n");
+        perror("m_socket closed");
+        exit(1);
     }
+
+    m_to_addr.sin_family = AF_AQUANET;
+    // Set local and dest aquanet addresses from CLI
+    m_to_addr.sin_addr.s_addr = std::stoi(argv[1]);
+    m_to_addr.sin_addr.d_addr = std::stoi(argv[2]);
 
     // Create subscriber objects for different message types
     if (dccl_enabled)
     {
         // twist
         ros::Subscriber sub_twist = nh.subscribe("aquanet_outbound_twist/", 1, twistMessageReceived);  // TODO: change name to Dccl
-        aquanet_inbound_publisher_twist = nh.advertise<geometry_msgs::Twist>("aquanet_inbound_twist", 1);
+        // aquanet_inbound_publisher_twist_1 = nh.advertise<geometry_msgs::Twist>("aquanet_inbound_twist", 1);
+        aquanet_inbound_publisher_twist_1 = nh.advertise<geometry_msgs::Twist>("/turtle1/cmd_vel", 1);
+        aquanet_inbound_publisher_twist_2 = nh.advertise<geometry_msgs::Twist>("/turtle2/cmd_vel", 1);
+        aquanet_inbound_publisher_twist_3 = nh.advertise<geometry_msgs::Twist>("/turtle3/cmd_vel", 1);
         // string
         ros::Subscriber sub_string = nh.subscribe("aquanet_outbound_string/", 1, stringMessageReceivedDccl);
         aquanet_inbound_publisher_string = nh.advertise<std_msgs::String>("aquanet_inbound_string", 1);
 
+        // multi-connetion support. very experimental!!
+        ros::Subscriber sub_twist_2 = nh.subscribe("aquanet_outbound_twist_2/", 1, twistMessageReceived2);
+        ros::Subscriber sub_twist_3 = nh.subscribe("aquanet_outbound_twist_3/", 1, twistMessageReceived3);
+        //
+
         // Start the receive thread
         std::thread t1(receiveAquaDccl, m_socket);
-        // Let ROS take over.
-        ros::spin();
-    }
-    else if (localMode)
-    {
-        ROS_INFO_STREAM("Starting aquanet-adapter in local mode. Experimental!");
-        // introduce waypoint messages for gazebo tests
-        // waypoint
-        ros::Subscriber sub_waypoint = nh.subscribe("aquanet_outbound_waypoint/", 1, waypointMessageReceived);
-        // TODO: change the topic name
-        aquanet_inbound_publisher_waypoint = nh.advertise<uuv_control_msgs::Waypoint>("aquanet_inbound_waypoint", 1);
-
-        // // Start the receive thread
-        // std::thread t1(receiveAqua2);
-
         // Let ROS take over.
         ros::spin();
     }
@@ -531,7 +569,7 @@ int main(int argc, char **argv)
     {
         // twist
         ros::Subscriber sub_twist = nh.subscribe("aquanet_outbound_twist/", 1, twistMessageReceived);
-        aquanet_inbound_publisher_twist = nh.advertise<geometry_msgs::Twist>("aquanet_inbound_twist", 1);
+        aquanet_inbound_publisher_twist_1 = nh.advertise<geometry_msgs::Twist>("aquanet_inbound_twist", 1);
         // string
         ros::Subscriber sub_string = nh.subscribe("aquanet_outbound_string/", 1, stringMessageReceived);
         aquanet_inbound_publisher_string = nh.advertise<std_msgs::String>("aquanet_inbound_string", 1);

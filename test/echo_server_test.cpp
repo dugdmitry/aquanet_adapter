@@ -30,7 +30,7 @@ std::string random_string( size_t length )
 ros::Publisher string_pub;
 bool m_server_mode = false;
 int m_msg_len = 5;
-int m_msg_freq_hz = 1;
+double m_msg_freq_hz = 1;
 
 // count packet delivery ratio
 int m_sent_msgs = 0;
@@ -114,7 +114,8 @@ int main(int argc, char** argv)
         }
         m_server_mode = false;
         m_msg_len = std::stoi(argv[2]);
-        m_msg_freq_hz = std::stoi(argv[3]);
+        // m_msg_freq_hz = std::stoi(argv[3]);
+        m_msg_freq_hz = 1.0 / std::stod(argv[3]);
     }
     else
     {
@@ -126,7 +127,7 @@ int main(int argc, char** argv)
     ros::NodeHandle nh_;
     // ros::Publisher string_pub = nh_.advertise<std_msgs::String>("aquanet_outbound_string", 1);
     string_pub = nh_.advertise<std_msgs::String>("aquanet_outbound_string", 1);
-    ros::Subscriber sub = nh_.subscribe("/aquanet_inbound_string", 1, echoCallback);
+    ros::Subscriber sub = nh_.subscribe("/aquanet_inbound_string", 100, echoCallback);
 
     if (!m_server_mode)
     {
@@ -183,3 +184,4 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
