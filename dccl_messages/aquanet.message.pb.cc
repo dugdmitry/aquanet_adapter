@@ -35,7 +35,7 @@ void protobuf_AssignDesc_aquanet_2emessage_2eproto() {
       "aquanet.message.proto");
   GOOGLE_CHECK(file != NULL);
   AquanetMessage_descriptor_ = file->message_type(0);
-  static const int AquanetMessage_offsets_[7] = {
+  static const int AquanetMessage_offsets_[10] = {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, ros_msg_id_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, x_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, y_),
@@ -43,6 +43,9 @@ void protobuf_AssignDesc_aquanet_2emessage_2eproto() {
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, body_message_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, veh_class_),
     GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, battery_ok_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, max_forward_speed_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, heading_offset_),
+    GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(AquanetMessage, use_fixed_heading_),
   };
   AquanetMessage_reflection_ =
     ::google::protobuf::internal::GeneratedMessageReflection::NewGeneratedMessageReflection(
@@ -90,15 +93,18 @@ void protobuf_AddDesc_aquanet_2emessage_2eproto() {
   ::dccl::protobuf_AddDesc_dccl_2foption_5fextensions_2eproto();
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
     "\n\025aquanet.message.proto\032\034dccl/option_ext"
-    "ensions.proto\"\304\002\n\016AquanetMessage\022+\n\nros_"
+    "ensions.proto\"\304\003\n\016AquanetMessage\022+\n\nros_"
     "msg_id\030\001 \002(\rB\027\242\?\024 \001)\000\000\000\000\000\000\000\0001\000\000\000\000\000\000$@\022\"\n"
-    "\001x\030\002 \001(\001B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022\"\n\001y\030\003"
-    " \001(\001B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022\"\n\001z\030\004 \001(\001"
-    "B\027\242\?\024 \001)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022\034\n\014body_messag"
+    "\001x\030\002 \001(\001B\027\242\?\024 \001)\000\000\000\000\000\000Y\3001\000\000\000\000\000\000Y@\022\"\n\001y\030\003"
+    " \001(\001B\027\242\?\024 \001)\000\000\000\000\000\000Y\3001\000\000\000\000\000\000Y@\022\"\n\001z\030\004 \001(\001"
+    "B\027\242\?\024 \001)\000\000\000\000\000\000Y\3001\000\000\000\000\000\000Y@\022\034\n\014body_messag"
     "e\030\005 \001(\tB\006\242\?\003H\310\001\022/\n\tveh_class\030\006 \001(\0162\034.Aqu"
     "anetMessage.VehicleClass\022\022\n\nbattery_ok\030\007"
-    " \001(\010\"*\n\014VehicleClass\022\007\n\003AUV\020\001\022\007\n\003USV\020\002\022\010"
-    "\n\004SHIP\020\003:\n\242\?\007\010\001\020\200\002(\003", 380);
+    " \001(\010\0222\n\021max_forward_speed\030\010 \001(\001B\027\242\?\024 \002)\000"
+    "\000\000\000\000\000\000\0001\000\000\000\000\000\000Y@\022/\n\016heading_offset\030\t \001(\001"
+    "B\027\242\?\024 \002)\000\000\000\000\000\000$\3001\000\000\000\000\000\000$@\022\031\n\021use_fixed_h"
+    "eading\030\n \001(\010\"*\n\014VehicleClass\022\007\n\003AUV\020\001\022\007\n"
+    "\003USV\020\002\022\010\n\004SHIP\020\003:\n\242\?\007\010\001\020\200\002(\003", 508);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "aquanet.message.proto", &protobuf_RegisterTypes);
   AquanetMessage::default_instance_ = new AquanetMessage();
@@ -146,6 +152,9 @@ const int AquanetMessage::kZFieldNumber;
 const int AquanetMessage::kBodyMessageFieldNumber;
 const int AquanetMessage::kVehClassFieldNumber;
 const int AquanetMessage::kBatteryOkFieldNumber;
+const int AquanetMessage::kMaxForwardSpeedFieldNumber;
+const int AquanetMessage::kHeadingOffsetFieldNumber;
+const int AquanetMessage::kUseFixedHeadingFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 AquanetMessage::AquanetMessage()
@@ -175,6 +184,9 @@ void AquanetMessage::SharedCtor() {
   body_message_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   veh_class_ = 1;
   battery_ok_ = false;
+  max_forward_speed_ = 0;
+  heading_offset_ = 0;
+  use_fixed_heading_ = false;
   ::memset(_has_bits_, 0, sizeof(_has_bits_));
 }
 
@@ -232,7 +244,7 @@ void AquanetMessage::Clear() {
            ZR_HELPER_(last) - ZR_HELPER_(first) + sizeof(last));\
 } while (0)
 
-  if (_has_bits_[0 / 32] & 127u) {
+  if (_has_bits_[0 / 32] & 255u) {
     ZR_(x_, ros_msg_id_);
     z_ = 0;
     if (has_body_message()) {
@@ -240,6 +252,11 @@ void AquanetMessage::Clear() {
     }
     veh_class_ = 1;
     battery_ok_ = false;
+    max_forward_speed_ = 0;
+  }
+  if (_has_bits_[8 / 32] & 768u) {
+    heading_offset_ = 0;
+    use_fixed_heading_ = false;
   }
 
 #undef ZR_HELPER_
@@ -368,6 +385,51 @@ bool AquanetMessage::MergePartialFromCodedStream(
         } else {
           goto handle_unusual;
         }
+        if (input->ExpectTag(65)) goto parse_max_forward_speed;
+        break;
+      }
+
+      // optional double max_forward_speed = 8;
+      case 8: {
+        if (tag == 65) {
+         parse_max_forward_speed:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
+                 input, &max_forward_speed_)));
+          set_has_max_forward_speed();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(73)) goto parse_heading_offset;
+        break;
+      }
+
+      // optional double heading_offset = 9;
+      case 9: {
+        if (tag == 73) {
+         parse_heading_offset:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
+                 input, &heading_offset_)));
+          set_has_heading_offset();
+        } else {
+          goto handle_unusual;
+        }
+        if (input->ExpectTag(80)) goto parse_use_fixed_heading;
+        break;
+      }
+
+      // optional bool use_fixed_heading = 10;
+      case 10: {
+        if (tag == 80) {
+         parse_use_fixed_heading:
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   bool, ::google::protobuf::internal::WireFormatLite::TYPE_BOOL>(
+                 input, &use_fixed_heading_)));
+          set_has_use_fixed_heading();
+        } else {
+          goto handle_unusual;
+        }
         if (input->ExpectAtEnd()) goto success;
         break;
       }
@@ -438,6 +500,21 @@ void AquanetMessage::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(7, this->battery_ok(), output);
   }
 
+  // optional double max_forward_speed = 8;
+  if (has_max_forward_speed()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(8, this->max_forward_speed(), output);
+  }
+
+  // optional double heading_offset = 9;
+  if (has_heading_offset()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(9, this->heading_offset(), output);
+  }
+
+  // optional bool use_fixed_heading = 10;
+  if (has_use_fixed_heading()) {
+    ::google::protobuf::internal::WireFormatLite::WriteBool(10, this->use_fixed_heading(), output);
+  }
+
   if (_internal_metadata_.have_unknown_fields()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -490,6 +567,21 @@ void AquanetMessage::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(7, this->battery_ok(), target);
   }
 
+  // optional double max_forward_speed = 8;
+  if (has_max_forward_speed()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(8, this->max_forward_speed(), target);
+  }
+
+  // optional double heading_offset = 9;
+  if (has_heading_offset()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(9, this->heading_offset(), target);
+  }
+
+  // optional bool use_fixed_heading = 10;
+  if (has_use_fixed_heading()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteBoolToArray(10, this->use_fixed_heading(), target);
+  }
+
   if (_internal_metadata_.have_unknown_fields()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -508,7 +600,7 @@ int AquanetMessage::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::UInt32Size(
         this->ros_msg_id());
   }
-  if (_has_bits_[1 / 32] & 126u) {
+  if (_has_bits_[1 / 32] & 254u) {
     // optional double x = 2;
     if (has_x()) {
       total_size += 1 + 8;
@@ -539,6 +631,23 @@ int AquanetMessage::ByteSize() const {
 
     // optional bool battery_ok = 7;
     if (has_battery_ok()) {
+      total_size += 1 + 1;
+    }
+
+    // optional double max_forward_speed = 8;
+    if (has_max_forward_speed()) {
+      total_size += 1 + 8;
+    }
+
+  }
+  if (_has_bits_[8 / 32] & 768u) {
+    // optional double heading_offset = 9;
+    if (has_heading_offset()) {
+      total_size += 1 + 8;
+    }
+
+    // optional bool use_fixed_heading = 10;
+    if (has_use_fixed_heading()) {
       total_size += 1 + 1;
     }
 
@@ -599,6 +708,17 @@ void AquanetMessage::MergeFrom(const AquanetMessage& from) {
     if (from.has_battery_ok()) {
       set_battery_ok(from.battery_ok());
     }
+    if (from.has_max_forward_speed()) {
+      set_max_forward_speed(from.max_forward_speed());
+    }
+  }
+  if (from._has_bits_[8 / 32] & (0xffu << (8 % 32))) {
+    if (from.has_heading_offset()) {
+      set_heading_offset(from.heading_offset());
+    }
+    if (from.has_use_fixed_heading()) {
+      set_use_fixed_heading(from.use_fixed_heading());
+    }
   }
   if (from._internal_metadata_.have_unknown_fields()) {
     mutable_unknown_fields()->MergeFrom(from.unknown_fields());
@@ -637,6 +757,9 @@ void AquanetMessage::InternalSwap(AquanetMessage* other) {
   body_message_.Swap(&other->body_message_);
   std::swap(veh_class_, other->veh_class_);
   std::swap(battery_ok_, other->battery_ok_);
+  std::swap(max_forward_speed_, other->max_forward_speed_);
+  std::swap(heading_offset_, other->heading_offset_);
+  std::swap(use_fixed_heading_, other->use_fixed_heading_);
   std::swap(_has_bits_[0], other->_has_bits_[0]);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   std::swap(_cached_size_, other->_cached_size_);
@@ -850,6 +973,78 @@ void AquanetMessage::clear_battery_ok() {
   set_has_battery_ok();
   battery_ok_ = value;
   // @@protoc_insertion_point(field_set:AquanetMessage.battery_ok)
+}
+
+// optional double max_forward_speed = 8;
+bool AquanetMessage::has_max_forward_speed() const {
+  return (_has_bits_[0] & 0x00000080u) != 0;
+}
+void AquanetMessage::set_has_max_forward_speed() {
+  _has_bits_[0] |= 0x00000080u;
+}
+void AquanetMessage::clear_has_max_forward_speed() {
+  _has_bits_[0] &= ~0x00000080u;
+}
+void AquanetMessage::clear_max_forward_speed() {
+  max_forward_speed_ = 0;
+  clear_has_max_forward_speed();
+}
+ double AquanetMessage::max_forward_speed() const {
+  // @@protoc_insertion_point(field_get:AquanetMessage.max_forward_speed)
+  return max_forward_speed_;
+}
+ void AquanetMessage::set_max_forward_speed(double value) {
+  set_has_max_forward_speed();
+  max_forward_speed_ = value;
+  // @@protoc_insertion_point(field_set:AquanetMessage.max_forward_speed)
+}
+
+// optional double heading_offset = 9;
+bool AquanetMessage::has_heading_offset() const {
+  return (_has_bits_[0] & 0x00000100u) != 0;
+}
+void AquanetMessage::set_has_heading_offset() {
+  _has_bits_[0] |= 0x00000100u;
+}
+void AquanetMessage::clear_has_heading_offset() {
+  _has_bits_[0] &= ~0x00000100u;
+}
+void AquanetMessage::clear_heading_offset() {
+  heading_offset_ = 0;
+  clear_has_heading_offset();
+}
+ double AquanetMessage::heading_offset() const {
+  // @@protoc_insertion_point(field_get:AquanetMessage.heading_offset)
+  return heading_offset_;
+}
+ void AquanetMessage::set_heading_offset(double value) {
+  set_has_heading_offset();
+  heading_offset_ = value;
+  // @@protoc_insertion_point(field_set:AquanetMessage.heading_offset)
+}
+
+// optional bool use_fixed_heading = 10;
+bool AquanetMessage::has_use_fixed_heading() const {
+  return (_has_bits_[0] & 0x00000200u) != 0;
+}
+void AquanetMessage::set_has_use_fixed_heading() {
+  _has_bits_[0] |= 0x00000200u;
+}
+void AquanetMessage::clear_has_use_fixed_heading() {
+  _has_bits_[0] &= ~0x00000200u;
+}
+void AquanetMessage::clear_use_fixed_heading() {
+  use_fixed_heading_ = false;
+  clear_has_use_fixed_heading();
+}
+ bool AquanetMessage::use_fixed_heading() const {
+  // @@protoc_insertion_point(field_get:AquanetMessage.use_fixed_heading)
+  return use_fixed_heading_;
+}
+ void AquanetMessage::set_use_fixed_heading(bool value) {
+  set_has_use_fixed_heading();
+  use_fixed_heading_ = value;
+  // @@protoc_insertion_point(field_set:AquanetMessage.use_fixed_heading)
 }
 
 #endif  // PROTOBUF_INLINE_NOT_IN_HEADERS

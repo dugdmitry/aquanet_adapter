@@ -136,11 +136,41 @@ void twistMessageReceived(const geometry_msgs::Twist::ConstPtr& vel)
 void waypointMessageReceived(const uuv_control_msgs::Waypoint::ConstPtr& msg)
 {
     ROS_INFO_STREAM("Forwarding message:");
-    ROS_INFO_STREAM(std::setprecision(2) << std::fixed << "position=(" << msg->point.x << "," << msg->point.y << ")" << " angle=" << msg->point.z);
+    ROS_INFO_STREAM(std::setprecision(2) << std::fixed << "position=(" << msg->point.x << "," << msg->point.y << "," << msg->point.z << ")");
 
     // TODO: include the aquanet stack and forward the message over it locally
     // Forward message to the receiving topic, bypassing the aquanet stack so far
-    aquanet_inbound_publisher_waypoint.publish(msg);
+    // aquanet_inbound_publisher_waypoint.publish(msg);
+
+    // Construct aqua-message with string-message inside
+    std::string sent_msg;
+    dccl::Codec send_codec;
+    send_codec.load<AquanetMessage>();
+    {
+        AquanetMessage r_out;
+        r_out.set_ros_msg_id(3);                // 3 - ros waypoint message;
+
+        r_out.set_x(msg->point.x);
+        r_out.set_y(msg->point.y);
+        r_out.set_z(msg->point.z);
+
+        r_out.set_max_forward_speed(msg->max_forward_speed);
+        r_out.set_heading_offset(msg->heading_offset);
+        r_out.set_use_fixed_heading(msg->use_fixed_heading);
+
+        r_out.set_veh_class(AquanetMessage::AUV);
+        r_out.set_battery_ok(true);
+        std::cout << r_out.ByteSize() << "\n"; 
+        
+        send_codec.encode(&sent_msg, r_out);
+    }
+
+    // Send aqua-message over aqua-socket
+    if (aqua_sendto(m_socket, sent_msg.data(), sent_msg.size(), 0, (struct sockaddr *) & m_to_addr, sizeof (m_to_addr)) < 0) {
+        printf("failed to send to the socket");
+        perror("m_socket closed");
+        exit(1);
+    }
 }
 
 // string message
@@ -407,6 +437,23 @@ void receiveAquaDccl(int recv_socket)
                 msg.data = r_in.body_message();
                 aquanet_inbound_publisher_string.publish(msg);
             }
+            else if (r_in.ros_msg_id() == 3)        // handle waypoint message
+            {
+                uuv_control_msgs::Waypoint msg;
+
+                // TODO: get the timestamp and frame_id from the dccl frame as well
+                msg.header.stamp = ros::Time::now();
+                msg.header.frame_id = "world";
+
+                msg.point.x = r_in.x();
+                msg.point.y = r_in.y();
+                msg.point.z = r_in.z();
+                msg.max_forward_speed = r_in.max_forward_speed();
+                msg.heading_offset = r_in.heading_offset();
+                msg.use_fixed_heading = r_in.use_fixed_heading();
+
+                aquanet_inbound_publisher_waypoint.publish(msg);
+            }
             else
             {
                 ROS_INFO("Error! Unsupported message type: [%s]", r_in.ros_msg_id());
@@ -419,7 +466,7 @@ int main(int argc, char **argv)
 {
     // turn the local_mode on for gazebo integration tests
     bool localMode = false;
-    if (argc == 2)
+    if (argc == 3)
     {
         if (strcmp(argv[1], "local") == 0)
         {
@@ -450,15 +497,61 @@ int main(int argc, char **argv)
         }
     }
 
+    bool sender_mode = false;
+    bool receiver_mode = false;
+    if (localMode)
+    {
+        if (strcmp(argv[2], "sender") == 0)
+        {
+            sender_mode = true;
+        }
+        else if (strcmp(argv[2], "receiver") == 0)
+        {
+            receiver_mode = true;
+        }
+        else
+        {
+            std::cout << "Error! Unkown sender/receiver modes specified!\n";
+            return -1;
+        }
+    }
+
     // Start aquanet stack
     if (!localMode)
     {
         // system("cd /home/ubuntu/ros_catkin_ws/src/aquanet_adapter/aquanet_scripts && ./run_aquanet.sh");
         system("./run_aquanet.sh");
     }
+    else
+    {
+        if (sender_mode)
+        {
+            // start vmds
+            system("./run_vmds.sh");
+            // start sender node
+            system("./run_aquanet_sender.sh");
+        }
+        else if (receiver_mode)
+        {
+            // start receiver node
+            system("./run_aquanet_receiver.sh");
+        }
+    }
 
     // Initialize the ROS system and become a node.
-    ros::init(argc, argv, "aquanet_node");
+    if (!localMode)
+    {
+        ros::init(argc, argv, "aquanet_node");
+    }
+    else if (sender_mode)
+    {
+        ros::init(argc, argv, "aquanet_sender_node");
+    }
+    else
+    {
+        // receiver_mode
+        ros::init(argc, argv, "aquanet_receiver_node");
+    }
     ros::NodeHandle nh;
 
     if (!localMode)
@@ -497,6 +590,35 @@ int main(int argc, char **argv)
         m_to_addr.sin_addr.d_addr = std::stoi(argv[2]);
     }
 
+    if (sender_mode)
+    {
+        // Create socket
+        if ((m_socket = aqua_socket(AF_AQUANET, SOCK_AQUANET, 0)) < 0) {
+            printf("socket creation failed\n");
+            perror("m_socket closed");
+            exit(1);
+        }
+
+        m_to_addr.sin_family = AF_AQUANET;
+        // Set local and dest aquanet addresses from CLI
+        m_to_addr.sin_addr.s_addr = 1;
+        m_to_addr.sin_addr.d_addr = 2;
+    }
+    if (receiver_mode)
+    {
+        // Create socket
+        if ((m_socket = aqua_socket(AF_AQUANET, SOCK_AQUANET, 0)) < 0) {
+            printf("socket creation failed\n");
+            perror("m_socket closed");
+            exit(1);
+        }
+
+        m_to_addr.sin_family = AF_AQUANET;
+        // Set local and dest aquanet addresses from CLI
+        m_to_addr.sin_addr.s_addr = 2;
+        m_to_addr.sin_addr.d_addr = 1;
+    }
+
     // Create subscriber objects for different message types
     if (dccl_enabled)
     {
@@ -517,15 +639,24 @@ int main(int argc, char **argv)
         ROS_INFO_STREAM("Starting aquanet-adapter in local mode. Experimental!");
         // introduce waypoint messages for gazebo tests
         // waypoint
-        ros::Subscriber sub_waypoint = nh.subscribe("aquanet_outbound_waypoint/", 1, waypointMessageReceived);
+        ros::Subscriber sub_waypoint;
+        if (sender_mode)
+        {
+            sub_waypoint = nh.subscribe("aquanet_outbound_waypoint/", 1, waypointMessageReceived);
+            // Let ROS take over.
+            ros::spin();
+        }
+
         // TODO: change the topic name
-        aquanet_inbound_publisher_waypoint = nh.advertise<uuv_control_msgs::Waypoint>("aquanet_inbound_waypoint", 1);
+        if (receiver_mode)
+        {
+            aquanet_inbound_publisher_waypoint = nh.advertise<uuv_control_msgs::Waypoint>("aquanet_inbound_waypoint", 1);
+            // Start the receive thread
+            std::thread t1(receiveAquaDccl, m_socket);
+            // Let ROS take over.
+            ros::spin();
+        }
 
-        // // Start the receive thread
-        // std::thread t1(receiveAqua2);
-
-        // Let ROS take over.
-        ros::spin();
     }
     else
     {
